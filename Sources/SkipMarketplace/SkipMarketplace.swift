@@ -487,6 +487,49 @@ public struct Marketplace: Sendable {
         #endif
     }
 
+    /// Returns the URL for the app review page for the current app.
+    ///
+    /// Use `reviewUrl()` instead of `requestReview()` when the user is tapping a button to leave a review
+    public func reviewUrl(appStoreConnectId: String) -> URL? {
+        #if SKIP
+        guard let bundleId = Bundle.main.bundleIdentifier else {
+            return nil
+        }
+        return URL(string: "https://play.google.com/store/apps/details?id=\(bundleId)")
+        #elseif canImport(StoreKit)
+        return URL(string: "https://apps.apple.com/app/id\(appStoreConnectId)?action=write-review")
+        #else
+        return nil
+        #endif
+    }
+    
+    /// Returns the URL for the app review page for the current app. On iOS, we'll attempt to look up your App Store Connect ID from the current AppTransaction.
+    ///
+    /// Use `reviewUrl()` instead of `requestReview()` when the user is tapping a button to leave a review
+    public func reviewUrl() async -> URL? {
+        #if canImport(StoreKit)
+        guard let appStoreConnectId = await getAppStoreConnectId() else {
+            return nil
+        }
+        return reviewUrl(appStoreConnectId: appStoreConnectId)
+        #else
+        return reviewUrl(appStoreConnectId: "")
+        #endif
+    }
+    
+    #if canImport(StoreKit)
+    private func getAppStoreConnectId() async -> String? {
+        guard case .verified(let appTransaction) = try? await AppTransaction.shared,
+              let appStoreConnectId = appTransaction.appID else {
+            return nil
+        }
+        return String(appStoreConnectId)
+    }
+    #endif
+
+    /// Requests that the system show an app review request at most once every `period`.
+    /// The review prompt appears without direct user interaction.
+    /// Use `reviewUrl()` instead of `requestReview()` when the user is tapping a button to leave a review.
     // Design guides:
     // https://developer.android.com/guide/playcore/in-app-review#when-to-request
     // https://developer.apple.com/design/human-interface-guidelines/ratings-and-reviews#Best-practices

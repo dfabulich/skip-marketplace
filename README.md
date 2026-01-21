@@ -35,6 +35,8 @@ let package = Package(
 
 You can use this library to request that the app marketplace show a prompt to the user requesting a rating for the app for the given marketplace.
 
+## Pop up a review prompt
+
 ```swift
 import SkipMarketplace
 
@@ -47,6 +49,34 @@ relevant documentation for the
 [Apple App Store](https://developer.android.com/guide/playcore/in-app-review#when-to-request)
 and
 [Google PlayStore](https://developer.apple.com/design/human-interface-guidelines/ratings-and-reviews#Best-practices).
+
+Each marketplace may decide not to display a review prompt for a number of reasons. (User denied, asked too often, etc.)
+
+## Link to the "Write a Review" page
+
+```swift
+import SkipMarketpace
+
+Button("Write a review") {
+    if let url = Marketplace.current.reviewUrl(appStoreConnectId: 1234567890) {
+        UIApplication.shared.open(url)
+    }
+}
+```
+
+Alternately, there's an `async` version that computes your App Store Connect ID based on the current [AppTransaction](https://developer.apple.com/documentation/storekit/apptransaction) (but this doesn't work in local dev builds).
+
+```swift
+import SkipMarketpace
+
+Button("Write a review") {
+    Task {
+        if let url = await Marketplace.current.reviewUrl() {
+            UIApplication.shared.open(url)
+        }
+    }
+}
+```
 
 ## Querying App Installation Source
 
